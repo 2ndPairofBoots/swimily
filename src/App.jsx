@@ -66,7 +66,7 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <Router>
+          <Router basename="/swimily">
             <AuthenticatedApp />
           </Router>
           <Toaster />
