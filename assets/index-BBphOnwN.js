@@ -2069,7 +2069,7 @@ If a question does not make any sense, or is not factually coherent, explain why
 workerPath: ${je}
 langPath: ${wt}
 Expected traineddata: ${wt}eng.traineddata`);const At=await Ne(ce);G(it=>`${it}
-Preprocessed image for OCR.`),M(.2);const St="http://127.0.0.1:3877".trim(),Pt=effectiveRemoteOcrUrl(St);if(St&&!Pt&&G(it=>`${it}
+Preprocessed image for OCR.`),M(.2);const St="".trim(),Pt=effectiveRemoteOcrUrl(St);if(St&&!Pt&&G(it=>`${it}
 Server OCR URL is localhost-only; skipped on this host (use an HTTPS API URL in production builds — see server/README.md).`),Pt){M(.35),G(Rt=>`${Rt}
 Trying server OCR at ${Pt}...`);const it=12e4,$t=new AbortController,We=setTimeout(()=>$t.abort(),it);try{const Rt=await ocrViaServer(At,Pt,$t.signal),Mt=normalizeOcrText(Rt);$(Mt.slice(0,600));const Tt=parseWorkoutText(Mt);if((Tt==null?void 0:Tt.length)>0){d(Tt.map(yt=>({...defaultSet(),...yt,distance:xe(yt.distance,J),confident:!!yt.confident}))),e("manual"),M(1),G(yt=>`${yt}
 Server OCR OK (${Tt.length} set(s)).`);return}G(yt=>`${yt}
