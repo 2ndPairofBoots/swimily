@@ -1,0 +1,9 @@
+# Keep Render/Docker context small — only server + public/tessdata are needed for OCR image.
+node_modules
+dist
+.git
+.github
+src
+*.local
+.env
+.env.*

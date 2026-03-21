@@ -1,0 +1,12 @@
+# Render Blueprint — fixes "lstat .../server: no such file" by forcing context = repo root.
+# Dashboard: New → Blueprint → connect this repo, or attach blueprint to existing service.
+services:
+  - type: web
+    name: swimily-ocr
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: OCR_ALLOWED_ORIGINS
+        sync: false
