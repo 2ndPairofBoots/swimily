@@ -5,6 +5,7 @@ import Card from '../components/Card';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
 import { securityManager } from '../lib/security';
+import { apiFetchCredentials, apiUrl } from '../lib/api-base';
 
 export default function PasswordResetRequest() {
   const navigate = useNavigate();
@@ -25,10 +26,10 @@ export default function PasswordResetRequest() {
 
     setIsRequesting(true);
     try {
-      const res = await fetch('/api/auth/password-reset/request', {
+      const res = await fetch(apiUrl('/api/auth/password-reset/request'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: apiFetchCredentials(),
         body: JSON.stringify({ email: trimmedEmail }),
       });
 

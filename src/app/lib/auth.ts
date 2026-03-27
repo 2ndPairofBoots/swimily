@@ -1,4 +1,5 @@
 import { securityManager, logSecurityEvent, validateOwnership } from './security';
+import { apiFetchCredentials, apiUrl } from './api-base';
 
 export interface User {
   id: string;
@@ -234,10 +235,13 @@ class AuthService {
       headers['Authorization'] = `Bearer ${this.authToken}`;
     }
 
-    const response = await fetch(url, {
+    const resolvedUrl =
+      url.startsWith('http://') || url.startsWith('https://') ? url : apiUrl(url);
+
+    const response = await fetch(resolvedUrl, {
       ...options,
       headers,
-      credentials: 'same-origin',
+      credentials: apiFetchCredentials(),
     });
 
     return response;

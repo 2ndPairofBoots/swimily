@@ -1,10 +1,12 @@
 import { createBrowserRouter } from 'react-router';
 import Root from './Root';
+import LoadingScreen from './components/LoadingScreen';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     Component: Root,
+    HydrateFallback: LoadingScreen,
     children: [
       {
         index: true,

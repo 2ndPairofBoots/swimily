@@ -1,4 +1,5 @@
 import { authService } from './auth';
+import { apiFetchCredentials, apiUrl } from './api-base';
 import { cacheClearByPrefix, cacheGet, cacheSet, inflightDelete, inflightGet, inflightSet } from './api-cache';
 
 async function getApiErrorMessage(res: Response): Promise<string | null> {
@@ -19,7 +20,7 @@ async function fetchWithRefreshRetry(url: string, options: RequestInit): Promise
 
 async function checkApiHealth(): Promise<'ok' | 'db_error' | 'down'> {
   try {
-    const res = await fetch('/api/healthz', { method: 'GET', credentials: 'same-origin' });
+    const res = await fetch(apiUrl('/api/healthz'), { method: 'GET', credentials: apiFetchCredentials() });
     if (!res.ok) return 'down';
     const body = (await res.json()) as any;
     if (body?.db === 'error') return 'db_error';
