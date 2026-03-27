@@ -57,7 +57,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-[#111111] dark:bg-[#111111] light:bg-[#FAFAFA]">
       <div className="px-6 pt-16 pb-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <Logo size="sm" variant="wordmark" />
         </div>
 
