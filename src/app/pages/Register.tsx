@@ -59,9 +59,6 @@ export default function Register() {
       <div className="px-6 pt-16 pb-6">
         <div className="flex items-center justify-between mb-6">
           <Logo size="sm" variant="wordmark" />
-          <Link to="/login" className="text-sm font-semibold text-cyan-500 hover:text-cyan-400">
-            Sign in instead
-          </Link>
         </div>
 
         <h1 className="text-3xl font-bold text-white light:text-gray-900 tracking-tight">Create account</h1>

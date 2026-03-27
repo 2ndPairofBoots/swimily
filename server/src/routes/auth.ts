@@ -6,7 +6,7 @@ import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
 import { z } from 'zod';
-import { pool } from '../storage/db';
+import { pool, queryWithRetry } from '../storage/db';
 import { requireAuth } from '../middleware/auth';
 import { rateLimitByUser } from '../middleware/rateLimit';
 
@@ -106,7 +106,7 @@ authRouter.post(
   try {
     const { email, password, name } = registerSchema.parse(req.body);
 
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existing = await queryWithRetry('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -116,7 +116,7 @@ authRouter.post(
     });
 
     // New accounts start unverified until email verification completes.
-    const userResult = await pool.query(
+    const userResult = await queryWithRetry(
       `INSERT INTO users (email, password_hash, name, email_verified)
        VALUES ($1, $2, $3, false)
        RETURNING id, email, name, email_verified, created_at`,
@@ -136,7 +136,14 @@ authRouter.post(
       },
     });
   } catch (err) {
-    return res.status(400).json({
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid registration input' });
+    }
+    const code = (err as { code?: string } | undefined)?.code;
+    if (code === 'ECONNRESET' || code === 'ECONNREFUSED') {
+      return res.status(503).json({ error: 'Database unavailable. Please try again in a minute.' });
+    }
+    return res.status(500).json({
       error: err instanceof Error ? err.message : 'Registration failed',
     });
   }

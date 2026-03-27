@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -10,7 +10,59 @@ if (!connectionString) {
 const pool = new Pool({
   connectionString,
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+  max: 10,
+  connectionTimeoutMillis: 20_000,
+  idleTimeoutMillis: 30_000,
 });
+
+const TRANSIENT_DB_CODES = new Set([
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'EPIPE',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+]);
+
+function isTransientDbError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: string; cause?: { code?: string } };
+  if (e.code && TRANSIENT_DB_CODES.has(e.code)) return true;
+  if (e.cause?.code && TRANSIENT_DB_CODES.has(e.cause.code)) return true;
+  return false;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Retries transient TCP/SSL drops (common with VPNs + hosted Postgres). */
+export async function queryWithRetry<R extends QueryResultRow = QueryResultRow>(
+  text: string,
+  values?: unknown[],
+  options?: { retries?: number }
+): Promise<QueryResult<R>> {
+  const maxAttempts = options?.retries ?? 4;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      if (values === undefined) {
+        return await pool.query<R>(text);
+      }
+      return await pool.query<R>(text, values);
+    } catch (err) {
+      lastErr = err;
+      if (!isTransientDbError(err) || attempt === maxAttempts) {
+        throw err;
+      }
+      const delayMs = Math.min(200 * 2 ** (attempt - 1), 2000);
+      // eslint-disable-next-line no-console
+      console.warn(`[db] transient error (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs}ms`, err);
+      await sleep(delayMs);
+    }
+  }
+  throw lastErr;
+}
 
 export const SCHEMA_SQL = `
   -- Neon typically allows pgcrypto; uuid-ossp may be blocked.
@@ -193,7 +245,7 @@ let initialized = false;
 export async function initDb() {
   if (initialized) return;
   if (!connectionString) return;
-  await pool.query(SCHEMA_SQL);
+  await queryWithRetry(SCHEMA_SQL, undefined, { retries: 5 });
   initialized = true;
 }
 
