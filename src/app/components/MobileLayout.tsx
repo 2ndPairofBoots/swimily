@@ -23,7 +23,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
   return (
     <div className="flex flex-col h-screen max-w-[430px] mx-auto bg-[#111111] dark:bg-[#111111] light:bg-[#FAFAFA]">
       {/* Main Content */}
-      <main className={`flex-1 overflow-y-auto ${hideBottomNav ? 'pb-6' : 'pb-20'}`}>
+      <main className={`flex-1 overflow-y-auto hide-scrollbar ${hideBottomNav ? 'pb-6' : 'pb-20'}`}>
         {children}
       </main>
       

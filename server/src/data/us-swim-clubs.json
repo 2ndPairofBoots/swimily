@@ -1,0 +1,23 @@
+[
+  { "id": "usas-nbac", "name": "North Baltimore Aquatic Club", "lsc": "Maryland", "city": "Baltimore", "state": "MD" },
+  { "id": "usas-dyn", "name": "Dynamo Swim Club", "lsc": "Georgia", "city": "Atlanta", "state": "GA" },
+  { "id": "usas-sandpipers", "name": "Sandpipers of Nevada", "lsc": "Southern Nevada", "city": "Las Vegas", "state": "NV" },
+  { "id": "usas-tac", "name": "Tac Titans", "lsc": "North Carolina", "city": "Cary", "state": "NC" },
+  { "id": "usas-riptide", "name": "Riptide Swim Team", "lsc": "Illinois", "city": "Chicago", "state": "IL" },
+  { "id": "usas-carmel", "name": "Carmel Swim Club", "lsc": "Indiana", "city": "Carmel", "state": "IN" },
+  { "id": "usas-nova", "name": "NOVA of Virginia Aquatics", "lsc": "Virginia", "city": "Richmond", "state": "VA" },
+  { "id": "usas-crow-canyon", "name": "Crow Canyon Country Club Sharks", "lsc": "Pacific", "city": "Danville", "state": "CA" },
+  { "id": "usas-gator", "name": "Gator Swim Club", "lsc": "Florida", "city": "Gainesville", "state": "FL" },
+  { "id": "usas-aac", "name": "Austin Aquatics", "lsc": "South Texas", "city": "Austin", "state": "TX" },
+  { "id": "usas-mission-viejo", "name": "Mission Viejo Nadadores", "lsc": "Southern California", "city": "Mission Viejo", "state": "CA" },
+  { "id": "usas-longhorn", "name": "Longhorn Aquatics", "lsc": "South Texas", "city": "Austin", "state": "TX" },
+  { "id": "usas-rose-bowl", "name": "Rose Bowl Aquatics", "lsc": "Southern California", "city": "Pasadena", "state": "CA" },
+  { "id": "usas-lakeside", "name": "Lakeside Swim Team", "lsc": "Kentucky", "city": "Louisville", "state": "KY" },
+  { "id": "usas-palo-alto", "name": "Palo Alto Stanford Aquatics", "lsc": "Pacific", "city": "Palo Alto", "state": "CA" },
+  { "id": "usas-jcc", "name": "JCC Swimming", "lsc": "Metropolitan", "city": "New York", "state": "NY" },
+  { "id": "usas-king", "name": "King Aquatic Club", "lsc": "Pacific Northwest", "city": "Seattle", "state": "WA" },
+  { "id": "usas-nbsc", "name": "Nation's Capital Swim Club", "lsc": "Potomac Valley", "city": "Bethesda", "state": "MD" },
+  { "id": "usas-bolles", "name": "Bolles School Sharks", "lsc": "Florida", "city": "Jacksonville", "state": "FL" },
+  { "id": "usas-trojan", "name": "Trojan Swim Club", "lsc": "Southern California", "city": "Los Angeles", "state": "CA" }
+]
+

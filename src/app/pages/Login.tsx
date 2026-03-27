@@ -7,7 +7,7 @@ import Button from '../components/Button';
 import { authService } from '../lib/auth';
 import { securityManager } from '../lib/security';
 import { useUser } from '../contexts/UserContext';
-import { ageNumberToString, fetchOwnProfile } from '../lib/profile';
+import { ageFromBirthdayString, ageNumberToString, fetchOwnProfile } from '../lib/profile';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -50,19 +50,25 @@ export default function Login() {
         name: profile?.name ?? '',
         team: profile?.team ?? '',
         email: profile?.email ?? trimmedEmail,
-        age: ageNumberToString(profile?.age),
+        birthday: profile?.birthday ?? '',
+        age: profile?.birthday ? ageFromBirthdayString(profile.birthday) : ageNumberToString(profile?.age),
         gender: profile?.gender ?? 'M',
         isPremium: profile?.isPremium ?? false,
       });
 
       updatePreferences({
         preferredCourse: preferences.preferredCourse ?? 'SCY',
+        preferredCourses:
+          preferences.preferredCourses && preferences.preferredCourses.length > 0
+            ? preferences.preferredCourses
+            : [preferences.preferredCourse ?? 'SCY'],
         units: preferences.units ?? 'yards',
         haptics: preferences.haptics ?? true,
         analytics: preferences.analytics ?? true,
       });
 
       updateNotifications({
+        notificationsEnabled: notifications.notificationsEnabled ?? true,
         pushEnabled: notifications.pushEnabled ?? true,
         emailEnabled: notifications.emailEnabled ?? true,
         practiceReminders: notifications.practiceReminders ?? true,
@@ -73,7 +79,7 @@ export default function Login() {
       });
 
       // onboardingComplete=true => go to app; false => send to onboarding
-      navigate(onboardingComplete ? '/' : '/onboarding');
+      navigate(onboardingComplete ? '/' : '/onboarding', { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -85,10 +91,7 @@ export default function Login() {
     <div className="min-h-screen bg-[#111111] dark:bg-[#111111] light:bg-[#FAFAFA]">
       <div className="px-6 pt-16 pb-6">
         <div className="flex items-center justify-between mb-6">
-          <Logo size="sm" />
-          <Link to="/register" className="text-sm font-semibold text-cyan-500 hover:text-cyan-400">
-            Create account
-          </Link>
+          <Logo size="sm" variant="wordmark" />
         </div>
 
         <h1 className="text-3xl font-bold text-white light:text-gray-900 tracking-tight">Sign in</h1>

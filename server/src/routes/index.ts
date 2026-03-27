@@ -6,6 +6,7 @@ import { recordsRouter } from './records';
 import { meetsRouter } from './meets';
 import { drylandRouter } from './dryland';
 import { aiRouter } from './ai';
+import { clubsRouter } from './clubs';
 
 export const apiRouter = Router();
 
@@ -16,4 +17,5 @@ apiRouter.use('/', recordsRouter);
 apiRouter.use('/', meetsRouter);
 apiRouter.use('/', drylandRouter);
 apiRouter.use('/', aiRouter);
+apiRouter.use('/', clubsRouter);
 

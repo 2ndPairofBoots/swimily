@@ -12,11 +12,12 @@ const pool = new Pool({
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
-const SCHEMA_SQL = `
-  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+export const SCHEMA_SQL = `
+  -- Neon typically allows pgcrypto; uuid-ossp may be blocked.
+  CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
   CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -29,15 +30,17 @@ const SCHEMA_SQL = `
     -- Onboarding fields
     team VARCHAR(255),
     gender VARCHAR(1),
-    age INTEGER
+    age INTEGER,
+    birthday DATE
   );
 
   -- Backfill for existing databases created before gender existed.
   ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(1);
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday DATE;
 
   -- Password reset tokens (store hashed token only)
   CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash TEXT UNIQUE NOT NULL,
     expires_at TIMESTAMP NOT NULL,
@@ -45,7 +48,7 @@ const SCHEMA_SQL = `
   );
 
   CREATE TABLE IF NOT EXISTS sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     refresh_token_hash TEXT NOT NULL,
     refresh_token_sha256 TEXT,
@@ -62,14 +65,21 @@ const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS user_preferences (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     preferred_course VARCHAR(10) NOT NULL,
+    preferred_courses TEXT[],
     units VARCHAR(20) NOT NULL,
     haptics BOOLEAN NOT NULL DEFAULT true,
     analytics BOOLEAN NOT NULL DEFAULT true,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
+  ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS preferred_courses TEXT[];
+  UPDATE user_preferences
+  SET preferred_courses = ARRAY[preferred_course]
+  WHERE preferred_courses IS NULL OR cardinality(preferred_courses) = 0;
+
   CREATE TABLE IF NOT EXISTS user_notification_settings (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    notifications_enabled BOOLEAN NOT NULL DEFAULT true,
     push_enabled BOOLEAN NOT NULL DEFAULT true,
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     practice_reminders BOOLEAN NOT NULL DEFAULT true,
@@ -80,9 +90,14 @@ const SCHEMA_SQL = `
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
+  ALTER TABLE user_notification_settings ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT true;
+  UPDATE user_notification_settings
+  SET notifications_enabled = true
+  WHERE notifications_enabled IS NULL;
+
   -- Practices + sets
   CREATE TABLE IF NOT EXISTS practices (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     total_yards INTEGER NOT NULL DEFAULT 0,
@@ -97,7 +112,7 @@ const SCHEMA_SQL = `
   );
 
   CREATE TABLE IF NOT EXISTS practice_sets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practice_id UUID NOT NULL REFERENCES practices(id) ON DELETE CASCADE,
     set_order INTEGER NOT NULL,
     distance INTEGER NOT NULL,
@@ -110,7 +125,7 @@ const SCHEMA_SQL = `
 
   -- Personal records (time + goal)
   CREATE TABLE IF NOT EXISTS personal_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     event VARCHAR(50) NOT NULL,
     course VARCHAR(10) NOT NULL,
@@ -127,7 +142,7 @@ const SCHEMA_SQL = `
 
   -- Meets
   CREATE TABLE IF NOT EXISTS meets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     date DATE NOT NULL,
@@ -139,7 +154,7 @@ const SCHEMA_SQL = `
 
   -- Dryland logs
   CREATE TABLE IF NOT EXISTS dryland_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     workout_type VARCHAR(20) NOT NULL,
@@ -151,7 +166,7 @@ const SCHEMA_SQL = `
 
   -- AI workouts + OCR scans (minimal MVP tables)
   CREATE TABLE IF NOT EXISTS ai_workouts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     workout_type TEXT NOT NULL,
     focus TEXT,
@@ -163,7 +178,7 @@ const SCHEMA_SQL = `
   );
 
   CREATE TABLE IF NOT EXISTS ocr_scans (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     image_hash TEXT NOT NULL,
     storage_path TEXT,

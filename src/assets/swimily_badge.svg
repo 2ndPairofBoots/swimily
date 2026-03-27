@@ -1,0 +1,11 @@
+<svg width="220" height="52" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="216" height="48" rx="24" fill="#06b6d4" />
+  <circle cx="28" cy="26" r="14" fill="rgba(0,0,0,0.15)" />
+  <path d="M20,29 Q28,21 36,29" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+  <path d="M20,34 Q28,26 36,34" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.5" />
+  <text x="52" y="31" font-size="18"
+        style="fill:#111111;font-family:'JetBrains Mono', monospace;font-weight:800;">
+    SWIMILY
+  </text>
+</svg>
+

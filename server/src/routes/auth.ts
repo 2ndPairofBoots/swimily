@@ -4,12 +4,68 @@ import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
+import { Resend } from 'resend';
 import { z } from 'zod';
 import { pool } from '../storage/db';
 import { requireAuth } from '../middleware/auth';
 import { rateLimitByUser } from '../middleware/rateLimit';
 
 const authRouter = Router();
+
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+}
+
+function getEmailFrom(): string {
+  return process.env.EMAIL_FROM ?? process.env.MAIL_FROM ?? 'onboarding@resend.dev';
+}
+
+async function sendVerificationEmail(email: string) {
+  const resend = getResendClient();
+  if (!resend) return;
+
+  const appOrigin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+  const token = encodeURIComponent(email);
+  const verifyUrl = `${appOrigin}/verify-email?token=${token}`;
+
+  try {
+    const result = await resend.emails.send({
+      from: getEmailFrom(),
+      to: email,
+      subject: 'Verify your Swimily email',
+      html: `<p>Welcome to Swimily.</p><p>Please verify your email:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p>`,
+    });
+    // eslint-disable-next-line no-console
+    console.log('[email] verification send result', result);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[email] verification send failed', err);
+  }
+}
+
+async function sendPasswordResetEmail(email: string, token: string) {
+  const resend = getResendClient();
+  if (!resend) return;
+
+  const appOrigin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+  const resetUrl = `${appOrigin}/password-reset/confirm?token=${encodeURIComponent(token)}`;
+
+  try {
+    const result = await resend.emails.send({
+      from: getEmailFrom(),
+      to: email,
+      subject: 'Reset your Swimily password',
+      html: `<p>We received a password reset request.</p><p>Open this link to continue:</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
+    });
+    // eslint-disable-next-line no-console
+    console.log('[email] password reset send result', result);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[email] password reset send failed', err);
+  }
+}
 
 function getPrivateKey() {
   const fromPath = process.env.JWT_PRIVATE_KEY_PATH;
@@ -59,17 +115,18 @@ authRouter.post(
       type: argon2.argon2id,
     });
 
-    // For MVP/dev: mark as verified so onboarding can proceed.
+    // New accounts start unverified until email verification completes.
     const userResult = await pool.query(
       `INSERT INTO users (email, password_hash, name, email_verified)
-       VALUES ($1, $2, $3, true)
+       VALUES ($1, $2, $3, false)
        RETURNING id, email, name, email_verified, created_at`,
       [email, passwordHash, name]
     );
 
     const user = userResult.rows[0];
+    await sendVerificationEmail(email);
     return res.status(201).json({
-      message: 'Registration successful. Please sign in.',
+      message: 'Registration successful. Check your email to verify your account.',
       user: {
         id: user.id,
         email: user.email,
@@ -348,6 +405,7 @@ authRouter.post(
          VALUES ($1, $2, $3)`,
         [user.id, tokenHash, expiresAt]
       );
+      await sendPasswordResetEmail(body.email, token);
 
       const isDev = process.env.NODE_ENV !== 'production';
       return res.status(200).json({

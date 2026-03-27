@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import MobileLayout from './components/MobileLayout';
 import { Toaster } from 'sonner';
 import { authService } from './lib/auth';
-import { ageNumberToString, fetchOwnProfile } from './lib/profile';
+import { ageFromBirthdayString, ageNumberToString, fetchOwnProfile } from './lib/profile';
 import { useUser } from './contexts/UserContext';
 
 export default function Root() {
@@ -43,19 +43,25 @@ export default function Root() {
           name: p?.name ?? '',
           team: p?.team ?? '',
           email: p?.email ?? '',
-          age: ageNumberToString(p?.age),
+          birthday: p?.birthday ?? '',
+          age: p?.birthday ? ageFromBirthdayString(p.birthday) : ageNumberToString(p?.age),
           gender: p?.gender ?? 'M',
           isPremium: p?.isPremium ?? false,
         });
 
         updatePreferences({
           preferredCourse: preferences?.preferredCourse ?? 'SCY',
+          preferredCourses:
+            preferences?.preferredCourses && preferences.preferredCourses.length > 0
+              ? preferences.preferredCourses
+              : [preferences?.preferredCourse ?? 'SCY'],
           units: preferences?.units ?? 'yards',
           haptics: preferences?.haptics ?? true,
           analytics: preferences?.analytics ?? true,
         });
 
         updateNotifications({
+          notificationsEnabled: notifications?.notificationsEnabled ?? true,
           pushEnabled: notifications?.pushEnabled ?? true,
           emailEnabled: notifications?.emailEnabled ?? true,
           practiceReminders: notifications?.practiceReminders ?? true,

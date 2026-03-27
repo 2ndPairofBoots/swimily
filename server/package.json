@@ -19,17 +19,17 @@
     "express": "*",
     "jsonwebtoken": "*",
     "pg": "*",
+    "resend": "^6.9.4",
     "zod": "*"
   },
   "devDependencies": {
-    "@types/cors": "*",
     "@types/cookie-parser": "*",
+    "@types/cors": "*",
     "@types/express": "*",
     "@types/jsonwebtoken": "*",
-    "@types/pg": "*",
     "@types/node": "*",
+    "@types/pg": "*",
     "ts-node": "*",
     "typescript": "*"
   }
 }
-

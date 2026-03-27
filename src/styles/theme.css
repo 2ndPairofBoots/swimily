@@ -67,3 +67,13 @@ select:focus {
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Hide scrollbars while keeping scroll behavior */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and legacy Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Droplets, TrendingUp, Flame, Zap, Plus, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -31,28 +31,11 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await fetchPractices();
-        if (!cancelled) setPractices(data);
-      } catch (e) {
-        if (!cancelled) {
-          const msg = e instanceof Error ? e.message : 'Failed to load workouts';
-          setError(msg);
-          toast.error(msg);
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void load();
+  }, [load]);
   
   const thisWeekYards = practices
     .filter(p => {
@@ -86,7 +69,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#111111] dark:bg-[#111111] light:bg-[#FAFAFA]">
         <div className="px-6 pt-16 pb-6">
           <div className="flex items-center justify-between mb-4">
-            <Logo size="md" />
+            <Logo size="md" variant="wordmark" />
           </div>
           <h1 className="text-3xl font-bold text-white light:text-gray-900 tracking-tight mb-1">{profile.name}</h1>
         </div>
@@ -102,7 +85,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="px-6 pt-16 pb-6">
         <div className="flex items-center justify-between mb-4">
-          <Logo size="md" />
+          <Logo size="md" variant="wordmark" />
         </div>
         <div className="flex items-center justify-between">
           <div>

@@ -1,13 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type SwimmerLevel = 1 | 2 | 3 | 4 | 5 | 6;
-export type CourseType = 'SCY' | 'LCM';
+export type CourseType = 'SCY' | 'LCM' | 'SCM';
 export type DistanceUnits = 'yards' | 'meters';
 
 export interface UserProfile {
   name: string;
   team: string;
   email: string;
+  birthday: string;
   age: string;
   gender: 'M' | 'F';
   level: SwimmerLevel;
@@ -20,11 +21,13 @@ export interface UserProfile {
 export interface UserPreferences {
   units: DistanceUnits;
   preferredCourse: CourseType;
+  preferredCourses: CourseType[];
   haptics: boolean;
   analytics: boolean;
 }
 
 export interface NotificationSettings {
+  notificationsEnabled: boolean;
   pushEnabled: boolean;
   emailEnabled: boolean;
   practiceReminders: boolean;
@@ -46,14 +49,13 @@ interface UserContextType {
   resetUser: () => void;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
 const STORAGE_KEY = 'swimily_user_data';
 
 const defaultProfile: UserProfile = {
   name: 'Sarah Chen',
   team: 'Stanford Swim Club',
   email: 'swimmer@example.com',
+  birthday: '2008-01-15',
   age: '16',
   gender: 'F',
   level: 4,
@@ -65,11 +67,13 @@ const defaultProfile: UserProfile = {
 const defaultPreferences: UserPreferences = {
   units: 'yards',
   preferredCourse: 'SCY',
+  preferredCourses: ['SCY'],
   haptics: true,
   analytics: true,
 };
 
 const defaultNotifications: NotificationSettings = {
+  notificationsEnabled: true,
   pushEnabled: true,
   emailEnabled: true,
   practiceReminders: true,
@@ -83,6 +87,7 @@ const loggedOutProfile: UserProfile = {
   name: '',
   team: '',
   email: '',
+  birthday: '',
   age: '',
   gender: 'M',
   level: 1,
@@ -90,6 +95,22 @@ const loggedOutProfile: UserProfile = {
   streakDays: 0,
   isPremium: false,
 };
+
+const noop = () => {};
+
+const fallbackContext: UserContextType = {
+  profile: defaultProfile,
+  preferences: defaultPreferences,
+  notifications: defaultNotifications,
+  updateProfile: noop,
+  updatePreferences: noop,
+  updateNotifications: noop,
+  addXP: noop,
+  incrementStreak: noop,
+  resetUser: noop,
+};
+
+const UserContext = createContext<UserContextType>(fallbackContext);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(() => {
@@ -110,7 +131,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        return { ...defaultPreferences, ...parsed.preferences };
+        const merged = { ...defaultPreferences, ...parsed.preferences };
+        if (!Array.isArray(merged.preferredCourses) || merged.preferredCourses.length === 0) {
+          merged.preferredCourses = [merged.preferredCourse ?? 'SCY'];
+        }
+        return merged;
       } catch {
         return defaultPreferences;
       }
@@ -193,9 +218,5 @@ export function UserProvider({ children }: { children: ReactNode }) {
 }
 
 export function useUser() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
+  return useContext(UserContext);
 }

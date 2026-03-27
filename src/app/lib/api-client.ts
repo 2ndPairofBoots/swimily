@@ -17,6 +17,18 @@ async function fetchWithRefreshRetry(url: string, options: RequestInit): Promise
   return await authService.fetchWithAuth(url, options);
 }
 
+async function checkApiHealth(): Promise<'ok' | 'db_error' | 'down'> {
+  try {
+    const res = await fetch('/api/healthz', { method: 'GET', credentials: 'same-origin' });
+    if (!res.ok) return 'down';
+    const body = (await res.json()) as any;
+    if (body?.db === 'error') return 'db_error';
+    return 'ok';
+  } catch {
+    return 'down';
+  }
+}
+
 export async function getJsonWithAuth<T>(url: string, opts?: { cacheKey?: string; ttlMs?: number }): Promise<T> {
   const cacheKey = opts?.cacheKey ?? `GET:${url}`;
   const ttlMs = opts?.ttlMs ?? 10_000;
@@ -28,15 +40,26 @@ export async function getJsonWithAuth<T>(url: string, opts?: { cacheKey?: string
   if (existing) return await existing;
 
   const p = (async () => {
-    const res = await fetchWithRefreshRetry(url, { method: 'GET' });
-    if (!res.ok) {
-      const msg = await getApiErrorMessage(res);
-      throw new Error(msg || `Request failed (${res.status})`);
-    }
+    try {
+      const res = await fetchWithRefreshRetry(url, { method: 'GET' });
+      if (!res.ok) {
+        const msg = await getApiErrorMessage(res);
+        throw new Error(msg || `Request failed (${res.status})`);
+      }
 
-    const body = (await res.json()) as T;
-    cacheSet(cacheKey, body, ttlMs);
-    return body;
+      const body = (await res.json()) as T;
+      cacheSet(cacheKey, body, ttlMs);
+      return body;
+    } catch (err) {
+      const health = await checkApiHealth();
+      if (health === 'db_error') {
+        throw new Error('Server is up but database is unavailable. Please retry in a moment.');
+      }
+      if (health === 'down') {
+        throw new Error('Cannot reach the API server. Make sure backend dev server is running.');
+      }
+      throw err instanceof Error ? err : new Error('Request failed');
+    }
   })();
 
   inflightSet(cacheKey, p);

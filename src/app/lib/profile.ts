@@ -1,23 +1,24 @@
 import { authService } from './auth';
 
-export type PreferredCourse = 'SCY' | 'LCM';
+export type PreferredCourse = 'SCY' | 'LCM' | 'SCM';
 export type DistanceUnits = 'yards' | 'meters';
 
 export interface ProfileIdentityPayload {
   name: string;
-  team: string;
-  age: number;
+  team?: string;
+  birthday: string; // yyyy-mm-dd
   gender: 'M' | 'F';
 }
 
 export interface ProfilePreferencesPayload {
-  preferredCourse: PreferredCourse;
+  preferredCourses: PreferredCourse[];
   units: DistanceUnits;
   haptics: boolean;
   analytics: boolean;
 }
 
 export interface ProfileNotificationsPayload {
+  notificationsEnabled: boolean;
   pushEnabled: boolean;
   emailEnabled: boolean;
   practiceReminders: boolean;
@@ -38,12 +39,14 @@ export interface OwnProfileResponse {
     name: string | null;
     team: string | null;
     age: number | null;
+    birthday: string | null;
     gender: 'M' | 'F' | null;
     email: string;
     isPremium: boolean;
   };
   preferences: {
     preferredCourse: PreferredCourse;
+    preferredCourses?: PreferredCourse[];
     units: DistanceUnits;
     haptics: boolean;
     analytics: boolean;
@@ -65,7 +68,14 @@ export async function fetchOwnProfile(): Promise<OwnProfileResponse> {
     const msg = await getApiErrorMessage(res);
     throw new Error(msg || `Failed to fetch profile (${res.status})`);
   }
-  return (await res.json()) as OwnProfileResponse;
+  const body = (await res.json()) as OwnProfileResponse;
+  if (!body.preferences.preferredCourses || body.preferences.preferredCourses.length === 0) {
+    body.preferences.preferredCourses = [body.preferences.preferredCourse];
+  }
+  if ((body.notifications as any).notificationsEnabled === undefined) {
+    (body.notifications as any).notificationsEnabled = true;
+  }
+  return body;
 }
 
 export async function saveOwnProfile(payload: OwnProfilePayload): Promise<OwnProfileResponse> {
@@ -82,18 +92,37 @@ export async function saveOwnProfile(payload: OwnProfilePayload): Promise<OwnPro
   return (await res.json()) as OwnProfileResponse;
 }
 
-export function parseAgeString(age: string): number | null {
-  const trimmed = age.trim();
-  if (!trimmed) return null;
-
-  const n = Number(trimmed);
-  if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
-  if (n < 1 || n > 119) return null;
-  return n;
+export function isValidBirthday(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  if (d > now) return false;
+  const ageYears = now.getUTCFullYear() - d.getUTCFullYear() - (
+    (now.getUTCMonth() < d.getUTCMonth()) ||
+    (now.getUTCMonth() === d.getUTCMonth() && now.getUTCDate() < d.getUTCDate())
+      ? 1
+      : 0
+  );
+  return ageYears >= 5 && ageYears <= 120;
 }
 
 export function ageNumberToString(age: number | null | undefined): string {
   if (age === null || age === undefined) return '';
   return String(age);
+}
+
+export function ageFromBirthdayString(birthday: string | null | undefined): string {
+  if (!birthday) return '';
+  const d = new Date(birthday);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  const ageYears = now.getUTCFullYear() - d.getUTCFullYear() - (
+    (now.getUTCMonth() < d.getUTCMonth()) ||
+    (now.getUTCMonth() === d.getUTCMonth() && now.getUTCDate() < d.getUTCDate())
+      ? 1
+      : 0
+  );
+  return String(ageYears);
 }
 
