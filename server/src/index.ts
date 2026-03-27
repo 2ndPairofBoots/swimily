@@ -3,9 +3,13 @@ import { createServer } from './server';
 
 const { app, server } = createServer();
 
-server.listen(process.env.PORT ? Number(process.env.PORT) : 3000, () => {
+const port = Number(process.env.PORT) || 3000;
+// Railway/containers need an explicit bind address (not only localhost).
+const host = process.env.HOST || '0.0.0.0';
+
+server.listen(port, host, () => {
   // eslint-disable-next-line no-console
-  console.log(`swimily-server listening on :${process.env.PORT ? process.env.PORT : 3000}`);
+  console.log(`swimily-server listening on http://${host}:${port}`);
 });
 
 export { app };

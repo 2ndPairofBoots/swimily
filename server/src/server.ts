@@ -12,6 +12,9 @@ export function createServer() {
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
+  // Default probe (some platforms hit `/` before `/healthz`).
+  app.get('/', (_req, res) => res.status(200).type('text/plain').send('ok'));
+
   app.get('/healthz', (_req, res) => res.status(200).json({ ok: true }));
   // Also expose under `/api/healthz` so the frontend dev proxy works.
   app.get('/api/healthz', async (_req, res) => {

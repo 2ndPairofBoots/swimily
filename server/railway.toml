@@ -1,0 +1,10 @@
+# Railway: set this service Root Directory to `server` in the dashboard.
+# Build runs `npm run build` (tsc) then `npm start` (node dist/index.js).
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+healthcheckPath = "/healthz"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
